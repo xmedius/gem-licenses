@@ -34,7 +34,8 @@ class Gem::Specification
     while (line = file_handle.gets) && (licenses.size == 0)
       line = line.strip
       # positive matches
-      [ /released under the (.*) license/i, /same license as (.*)/i, /^(.*) License, see/i, /^(.*) license$/i, /\(the (.*) license\)/i, /^license: (.*)/i, /^released under the (.*) license/i ].each do |r|
+
+      [ /released under the (.*) license/i, /same license as (.*)/i, /^(.*) License, see/i, /^(.*) license$/i, /\(the (.*) license\)/i, /^license: (.*)/i, /without limitation the rights to use, copy, modify, merge, publish/i, /^released under the (.*) license/i ].each do |r|
         res = Regexp.new(r).match(line)
         next unless res
         licenses << res.to_s
