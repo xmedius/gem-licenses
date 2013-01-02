@@ -5,6 +5,15 @@ class Gem::Specification
     ary = (__licenses || []).select { |l| l.length > 0 }
     ary.length == 0 ? guess_licenses : ary
   end
+
+  # Strip non UTF-8 characters from the string
+  def utf8_safe(string)
+    ic = Iconv.new('UTF-8//IGNORE', 'UTF-8')
+
+    # If the invalid character is the last (or in some cases, the second to last),
+    # Iconv raises an InvalidCharacter exception instead of stripping the character out
+    ic.iconv(string + '  ')[0..-3]
+  end
   
   def guess_licenses
     licenses = []
@@ -35,8 +44,15 @@ class Gem::Specification
       line = line.strip
       # positive matches
 
-      [ /released under the (.*) license/i, /same license as (.*)/i, /^(.*) License, see/i, /^(.*) license$/i, /\(the (.*) license\)/i, /^license: (.*)/i, /without limitation the rights to use, copy, modify, merge, publish/i, /^released under the (.*) license/i ].each do |r|
-        res = Regexp.new(r).match(line)
+      [ /released under the (.*) license/i, 
+        /same license as (.*)/i, 
+        /^(.*) License, see/i, 
+        /^(.*) license$/i, 
+        /\(the (.*) license\)/i, 
+        /^license: (.*)/i, 
+        /without limitation the rights to use, copy, modify, merge, publish/i, 
+        /^released under the (.*) license/i ].each do |r|
+        res = Regexp.new(r).match(utf8_safe(line))
         next unless res
         licenses << res.to_s
         break
