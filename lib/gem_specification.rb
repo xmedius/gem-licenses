@@ -1,3 +1,5 @@
+require 'iconv'
+
 class Gem::Specification
   alias_method :__licenses, :licenses
 
