@@ -1,9 +1,53 @@
 class Gem::Specification
   alias_method :__licenses, :licenses
 
+  def debugging
+    false
+  end
+
   def licenses
-    ary = (__licenses || []).select { |l| l.length > 0 }
-    ary.length == 0 ? guess_licenses : ary
+    cleaned_up_licenses
+  end
+
+  private
+
+  def cleaned_up_licenses
+    before = gem_or_file_license
+
+    puts "License #{before.inspect}" if debugging
+
+    # manually clean up some cruft
+    after = before.collect do |license|
+      stringified = license.to_s
+      if stringified == 'mit'
+        'MIT'
+      elsif stringified == 'lgpl'
+        'LGPL'
+      elsif stringified == 'gpl'
+        'GPL'
+      else
+        stringified
+      end
+    end
+
+    puts "  Cleaned #{after.inspect}" if debugging && before != after
+
+    after
+  end
+
+  def gem_or_file_license
+    from_gem || guess_licenses
+  end
+
+  def from_gem
+    result = (__licenses || []).select { |l| l.length > 0 }
+    if result.length > 0
+      puts "Retrieved from Gem license" if debugging
+      result
+    else
+      puts "Guessing from file" if debugging
+      nil
+    end
   end
 
   # Strip non UTF-8 characters from the string
@@ -31,30 +75,36 @@ class Gem::Specification
       end
       break if licenses.length > 0
     end
-    licenses << :unknown if licenses.length == 0
+
+    licenses << 'Unknown' if licenses.length == 0
+    licenses = ['Unknown'] if licenses == [nil]
+
     licenses
   end
 
-  private
-  
   def guess_licenses_from_file_contents(path)
     licenses = []
     file_handle = File.new(path, "r")
+
     while (line = file_handle.gets) && (licenses.size == 0)
       line = line.strip
       # positive matches
 
-      [ /released under the (.*) license/i, 
-        /same license as (.*)/i, 
-        /^(.*) License, see/i, 
-        /^(.*) license$/i, 
-        /\(the (.*) license\)/i, 
-        /^license: (.*)/i, 
+      [ /released under the (.+) license/i,
+        /same license as (.+)/i,
+        /same terms of (.+)/i,
+        /(.+) License, see/i,
+        /(\w+) license$/i,
+        /\(the (.+) license\)/i,
+        /license: (.+)/i,
         /without limitation the rights to use, copy, modify, merge, publish/i, 
-        /^released under the (.*) license/i ].each do |r|
+        /released under the (.+) license/i ].each do |r|
         res = Regexp.new(r).match(utf8_safe(line))
+        match = $1
+
         next unless res
-        licenses << res.to_s
+
+        licenses << match
         break
       end
     end
