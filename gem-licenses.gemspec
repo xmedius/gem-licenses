@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
     "lib/gem-licenses.rb",
     "lib/gem_licenses.rb",
     "lib/gem_specification.rb",
+    "lib/tasks/gem-licenses.rake",
     "spec/gem_licenses/gem_licenses_spec.rb",
     "spec/spec_helper.rb"
   ]
