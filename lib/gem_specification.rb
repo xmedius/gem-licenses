@@ -63,19 +63,21 @@ class Gem::Specification
   
   def guess_licenses
     licenses = []
-    Dir.foreach(full_gem_path) do |filename|
-      filename_without_extension = File.basename(filename, File.extname(filename)).downcase
-      if filename_without_extension.include?("license")
-        parts = filename.split('-')
-        if (parts.length >= 2)
-          licenses << parts[0].upcase
-        else
+    if File.exists?(full_gem_path)  # Sometimes it doesn't. Like with bundler.
+      Dir.foreach(full_gem_path) do |filename|
+        filename_without_extension = File.basename(filename, File.extname(filename)).downcase
+        if filename_without_extension.include?("license")
+          parts = filename.split('-')
+          if (parts.length >= 2)
+            licenses << parts[0].upcase
+          else
+            licenses = guess_licenses_from_file_contents File.join(full_gem_path, filename)
+          end
+        elsif filename_without_extension.include?("readme")
           licenses = guess_licenses_from_file_contents File.join(full_gem_path, filename)
         end
-      elsif filename_without_extension.include?("readme")
-        licenses = guess_licenses_from_file_contents File.join(full_gem_path, filename)
+        break if licenses.length > 0
       end
-      break if licenses.length > 0
     end
 
     licenses << 'Unknown' if licenses.length == 0
