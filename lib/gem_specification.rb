@@ -54,6 +54,7 @@ class Gem::Specification
 
   # Strip non UTF-8 characters from the string
   def utf8_safe(string)
+    return string if string.nil?
     ic = Iconv.new('UTF-8//IGNORE', 'UTF-8')
 
     # If the invalid character is the last (or in some cases, the second to last),
@@ -90,8 +91,10 @@ class Gem::Specification
     licenses = []
     file_handle = File.new(path, "r")
 
-    while (line = file_handle.gets) && (licenses.size == 0)
+    contents = ''
+    while (line = utf8_safe(file_handle.gets)) && (licenses.size == 0)
       line = line.strip
+      contents << line+' '
       # positive matches
 
       [ /released under the (.+) license/i,
@@ -101,9 +104,8 @@ class Gem::Specification
         /(\w+) license$/i,
         /\(the (.+) license\)/i,
         /license: (.+)/i,
-        /without limitation the rights to use, copy, modify, merge, publish/i, 
         /released under the (.+) license/i ].each do |r|
-        res = Regexp.new(r).match(utf8_safe(line))
+        res = Regexp.new(r).match(line)
         match = $1
 
         next unless res
@@ -113,6 +115,12 @@ class Gem::Specification
       end
     end
     file_handle.close
+
+    # multi-line matches
+    mit = 'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files \(the ["\']Software["\']\), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:'
+    if contents =~ /#{mit}/mi
+      licenses << "MIT"
+    end
     licenses
   end
   
