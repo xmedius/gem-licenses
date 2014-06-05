@@ -1,5 +1,3 @@
-require 'iconv'
-
 class Gem::Specification
   alias_method :__licenses, :licenses
 
@@ -55,13 +53,9 @@ class Gem::Specification
   # Strip non UTF-8 characters from the string
   def utf8_safe(string)
     return string if string.nil?
-    ic = Iconv.new('UTF-8//IGNORE', 'UTF-8')
-
-    # If the invalid character is the last (or in some cases, the second to last),
-    # Iconv raises an InvalidCharacter exception instead of stripping the character out
-    ic.iconv(string + '  ')[0..-3]
+    string.force_encoding('UTF-8').encode('UTF-16', :invalid => :replace, :replace => '').encode('UTF-8')
   end
-  
+
   def guess_licenses
     licenses = []
     if File.exists?(full_gem_path)  # Sometimes it doesn't. Like with bundler.
@@ -123,6 +117,6 @@ class Gem::Specification
     end
     licenses
   end
-  
+
 end
 
